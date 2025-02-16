@@ -71,7 +71,7 @@ Create a showcase project demonstrating the use of CQRS and event sourcing with 
 ### Setup
 1. Clone the repository:
    ```
-   git clone https://github.com/your-username/work-order-system.git
+   git clone git@github.com:mkhan-trustly/work-order-mngmnt.git
    ```
    
 2. Navigate to the project directory:
