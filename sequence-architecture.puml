@@ -1,0 +1,43 @@
+@startuml
+title Work Order Flow (CQRS + Event Sourcing + Saga)
+
+skinparam linetype polyline
+
+actor User
+entity "Command API" as CommandAPI
+entity "Query API" as QueryAPI
+database "Event Store" as EventStore
+database "Read Model" as ReadModel
+entity "Work Order Aggregate" as Aggregate
+entity "Work Order Orchestrator" as Saga
+entity "Command Gateway" as CommandGateway
+
+User -> CommandAPI : Create Work Order
+CommandAPI -> CommandGateway : Dispatch CreateWorkOrderCommand
+CommandGateway -> Aggregate : Handle CreateWorkOrderCommand
+Aggregate -> EventStore : Persist WorkOrderCreatedEvent
+EventStore --> "Event Bus" as EventBus : Publish WorkOrderCreatedEvent
+EventBus --> Saga : Notify WorkOrderCreatedEvent
+Saga -> Saga : Start Saga
+Saga -> CommandGateway : Dispatch AssignWorkOrderCommand
+CommandGateway -> Aggregate : Handle AssignWorkOrderCommand
+Aggregate -> EventStore : Persist WorkOrderAssignedEvent
+EventStore --> EventBus : Publish WorkOrderAssignedEvent
+EventBus --> Saga : Notify WorkOrderAssignedEvent
+Saga -> CommandGateway : Dispatch ExecuteWorkOrderCommand
+CommandGateway -> Aggregate : Handle ExecuteWorkOrderCommand
+Aggregate -> EventStore : Persist WorkOrderExecutedEvent
+EventStore --> EventBus : Publish WorkOrderExecutedEvent
+EventBus --> Saga : Notify WorkOrderExecutedEvent
+Saga -> Saga : End Saga
+
+EventBus --> "Projections" as Projections : Notify WorkOrderCreatedEvent
+EventBus --> Projections : Notify WorkOrderAssignedEvent
+EventBus --> Projections : Notify WorkOrderExecutedEvent
+Projections -> ReadModel : Update Read Model
+
+User -> QueryAPI : Get Work Order
+QueryAPI -> ReadModel : Dispatch FindWorkOrderQuery
+ReadModel -> QueryAPI : Return Work Order Details
+
+@enduml

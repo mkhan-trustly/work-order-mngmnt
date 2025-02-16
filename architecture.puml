@@ -1,0 +1,34 @@
+@startuml
+
+package "Command Side" {
+    [Command Gateway] --> [Command Bus]
+    [Command Bus] --> [Aggregate]
+    [Aggregate] --> [Event Store]
+}
+
+package "Event Side" {
+    [Event Store] --> [Event Bus]
+    [Event Bus] --> [Projections]
+    [Event Bus] --> [Saga]
+    [Projections] --> [Read Model]
+}
+
+package "Query Side" {
+    [Read Model] --> [Query API]
+}
+
+package "Saga Side" {
+    [Saga] --> [Command Gateway]
+}
+
+[Command Gateway] --> [Command Bus]
+[Command Bus] --> [Aggregate]
+[Aggregate] --> [Event Store]
+[Event Store] --> [Event Bus]
+[Event Bus] --> [Projections]
+[Projections] --> [Read Model]
+[Read Model] --> [Query API]
+[Event Bus] --> [Saga]
+[Saga] --> [Command Gateway]
+
+@enduml
