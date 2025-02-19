@@ -99,6 +99,26 @@ mvn clean test
 Created using PlantUML, see [sequence-architecture.puml](sequence-architecture.puml)
 ![img.png](sequence-architecture.png)
 
+## Architecture flow
+
+### Command Side
+1) The Command Gateway sends commands to the Command Bus.
+2) The Command Bus routes commands to the appropriate Aggregate.
+3) The Aggregate processes the command, applies events, and stores them in the Event Store.
+
+### Event Side
+1) The Event Store publishes events to the Event Bus.
+2) The Event Bus distributes events to both Projections and Sagas.
+3) Projections update the Read Model based on the events.
+
+### Query Side
+1) The Read Model is a query-optimized database used for read operations.
+2) The Query API provides access to the Read Model for querying.
+
+### Saga Side
+1) Sagas listen to events from the Event Bus.
+2) Based on the events, Sagas can send new commands to the Command Gateway to trigger further actions (e.g., compensating actions or follow-up commands).
+
 ## Design details
 
 ### Microservices
@@ -125,6 +145,15 @@ Aggregate root, which then performs state changes or emits events.
 
 #####  Event Store
 A repository for events, which represent the changes that occurred in aggregates over time.
+
+### Command Bus
+The Command Bus is the infrastructure component responsible for routing commands to their respective command handlers. 
+It is the backbone of the command dispatching mechanism. It ensures that commands are delivered to the correct aggregate or command handler.
+
+### Command Gateway
+The Command Gateway is a higher-level abstraction that simplifies the process of sending commands.
+It provides a user-friendly interface (like send()) to interact with the Command Bus. 
+When you call commandGateway.send(command), the Command Gateway delegates the command to the Command Bus for further processing.
 
 ##### Aggregate in Axon
 * Is the entry point for changes to an entity’s state.
@@ -202,11 +231,13 @@ A repository for events, which represent the changes that occurred in aggregates
 
 ## Sagas in Axon
 #### Sagas (Story telling)
-In a distributed system, you can’t use a single transaction because the steps span multiple services or components. Instead, Sagas break the process into smaller steps and handle failures by compensating for completed steps.
+In a distributed system, you can’t use a single transaction because the steps span multiple services or components. 
+Instead, Sagas break the process into smaller steps and handle failures by compensating for completed steps.
 Work order management example:
 ```
 Create a work order → assign it to an agent → execute the work order.
 ```
+In simple terms, Sagas coordinate actions across multiple Aggregates in response to events.
 
 #### Orchestration vs Choreography
 - Orchestration: A central controller (Saga) explicitly coordinates the flow of events and commands.
